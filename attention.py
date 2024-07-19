@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from transformers.utils import PaddingStrategy
 
-class PositionalEncoding(nn.torch):
+class PositionalEncoding(nn.Module):
     def __init__(self,d_model:int,dropout:float,max_len:int=5000):
 
         super(PositionalEncoding,self).__init__()
@@ -26,3 +26,18 @@ class PositionalEncoding(nn.torch):
 
         x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False)
         return self.dropout(x)
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self,h:int,d_model:int,dropout:float=0.1):
+
+        super(MultiHeadAttention,self).__init__()
+        assert d_model%h==0
+        self.d_h = d_model // h
+        self.h = h
+        ####四个深拷贝，相互独立的linear全连接层
+        self.linears = nn.ModuleList([copy.deepcopy(nn.Linear(d_model, d_model)) for _ in range(4)])
+        self.attn = None
+        self.dropout = nn.Dropout(p=dropout)
+
+     def attention(self, query: torch.Tensor, key:torch.Tensor, value:torch.Tensor, mask: torch.Tensor=None, dropout: torch.nn.Module=None):
+
